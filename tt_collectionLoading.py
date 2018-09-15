@@ -14,19 +14,20 @@ currentCollection = {
 'Blobra'  : 1 ,
 }
 
+currentHand = []
+
 def printCollection():
 	print "Your current cards are as follows"
 	print "          NAME        COUNT"
-	#print currentCollection
 	for name, count in currentCollection.items():
-		print "%15s" %name + "%10s" % count
+		print "%15s" % name + "%10s" % count
 
 def addToCollection(cardName, count):
-	print "Adding %s copies of %s to your collection" % (count, cardName)
+	print "\nAdding %s copies of %s to your collection" % (count, cardName)
 	currentCollection[cardName] = count
 
 def saveCollection(collectionName):
-	print "Saving your current collection under name %s" % collectionName
+	print "\nSaving your current collection under name %s" % collectionName
 	filename = os.path.join(memCardDir, collectionName + '.txt')
 	os.chmod(filename, stat.S_IWUSR|stat.S_IREAD)
 	with open(filename,'w') as outFile:
@@ -38,7 +39,7 @@ def saveCollection(collectionName):
 	os.chmod(filename, stat.S_IREAD|stat.S_IRGRP|stat.S_IROTH)
 
 def loadCollection(collectionName):
-	print "Opening collection %s" % collectionName
+	print "\nOpening collection %s" % collectionName
 	filename = os.path.join(memCardDir, collectionName + '.txt')
 	with open(filename,'r') as inFile:
 		for line in inFile:
@@ -47,43 +48,68 @@ def loadCollection(collectionName):
 			addToCollection(name, count)
 
 def loadDefaultCollection(saveName):
-	print "New collection!"
+	print "\nNew collection!"
 	print "Saving collection first.."
 	saveCollection(saveName)
 
-def main():
-	print "Type 'New Game' to begin a new collection"
-	print "Type your collection's name to load from a previous save"
-	print "The current collections are as follows:"
-	print "\n"
-	print "%s" % os.listdir(memCardDir)
-	print "\n"
-	collectionChoice = raw_input("New game or load previous from list above (type file name without extension)?\n")
+def beginGameOptions():
+	collectionChoice = raw_input("\nNew game or load previous from list above (type file name without extension)?\n")
 
 	if collectionChoice.lower() == "new game":
 		print "You will begin with the basic set of cards"
 		saveName = raw_input("Please give your current collection a new name: \n")
-		loadDefaultCollection(saveName)
+		if os.path.exists(os.path.join(memCardDir, saveName + ".txt")):
+			overWrite = raw_input("%s collection already exists. Overwrite?\n" % saveName)
+			if overWrite.lower() == "yes":
+				loadDefaultCollection(saveName)
+				return saveName
+			else:
+				beginGameOptions()
 	elif collectionChoice.lower() != "new game" and len(os.listdir(memCardDir)) == 0:
 		print "You do not have any saved collections"
 		print "You will begin with the basic set of cards"
-		loadDefaultCollection()
+		saveName = raw_input("Please give your current collection a new name: \n")
+		loadDefaultCollection(saveName)
+		return saveName
 	else:
 		for file in os.listdir(memCardDir):
 			if os.path.exists(os.path.join(memCardDir, collectionChoice + ".txt")):
 				loadCollection(collectionChoice)
 				saveName = collectionChoice
 				break
+		return saveName
 
-	print "Let's start the game!"
-	collectionView = raw_input("Would you like to see your collection one more time (yes or no)?\n")
+def addToHand():
+	print "\nFrom your list of cards, select 5 to use in your hand"
+	cardsInHand = 0
+	while cardsInHand < 5:
+		cardName = raw_input("Please select a card to add to your hand\n")
+		if cardName not in currentCollection.keys():
+			print "You do not have that card, choose another"
+		else:
+			currentHand.append(cardName)
+			cardsInHand += 1
+
+def main():
+	print "\nType 'New Game' to begin a new collection"
+	print "Type your collection's name to load from a previous save"
+	print "The current collections are as follows:"
 	print "\n"
+	print "%s" % os.listdir(memCardDir)
+	print "\n"
+
+	saveName = beginGameOptions()
+
+	print "Let's start the game!\n"
+	collectionView = raw_input("Would you like to see your collection one more time (yes or no)?\n")
 	if collectionView.lower() == "yes": 
 		printCollection()
 		print "\n"
 
-	#saveGame = raw_input("Would you like to save your progress?")
-	#if saveGame.lower() == "yes": 
-	#	saveCollection(saveName)
+	saveGame = raw_input("Would you like to save your progress before you begin?\n")
+	if saveGame.lower() == "yes": 
+		saveCollection(saveName)
+
+	addToHand()
 if __name__ == "__main__":
     main()
